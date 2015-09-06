@@ -1,0 +1,39 @@
+{
+  "type": "JVM",
+  "queries": [
+    {
+      "object": "java.lang:type=Memory",
+      "attributes": [
+        {
+          "name": "HeapMemoryUsage",
+          "key": "init",
+          "alias": "InitalHeapMemory"
+        },
+        {
+          "name": "NonHeapMemoryUsage",
+          "key": "used",
+          "alias": "UsedNonHeapMemory"
+        }
+      ]
+    },
+    {
+      "object": "java.lang:type=Threading",
+      "attributes": [
+        {
+          "name": "ThreadCount"
+        },
+        {
+          "name": "PeakThreadCount"
+        }
+      ]
+    },
+    {
+      "object": "java.lang:type=ClassLoading",
+      "attributes": [
+        {
+          "name": "LoadedClassCount"
+        }
+      ]
+    }
+  ]
+}
