@@ -1,0 +1,64 @@
+{
+  "type": "tomcat",
+  "queries": [
+    {
+      "object": "Catalina:type=ThreadPool,name=*",
+      "attributes": [
+        {
+          "name": "currentThreadCount",
+          "label": "tomcat.threads.{name}.count"
+        },
+        {
+          "name": "currentThreadsBusy",
+          "label": "tomcat.threads.{name}.busy"
+        },
+        {
+          "name": "maxThreads",
+          "label": "tomcat.threads.{name}.max"
+        }
+      ]
+    },
+    {
+      "object": "Catalina:type=GlobalRequestProcessor,*",
+      "attributes": [
+        {
+          "name": "bytesSent",
+          "label": "tomcat.{name}.bytesSent"
+        },
+        {
+          "name": "bytesReceived",
+          "label": "tomcat.{name}.bytesReceived"
+        },
+        {
+          "name": "errorCount",
+          "label": "tomcat.{name}.errorCount"
+        },
+        {
+          "name": "requestCount",
+          "label": "tomcat.{name}.requestCount"
+        },
+        {
+          "name": "maxTime",
+          "label": "tomcat.{name}.maxTime"
+        },
+        {
+          "name": "processingTime",
+          "label": "tomcat.{name}.processingTime"
+        }
+      ]
+    },
+    {
+      "object": "Catalina:type=Cache,*",
+      "attributes": [
+        {
+          "name": "accessCount",
+          "label": "tomcat.cache.{context}.accessCount"
+        },
+        {
+          "name": "hitsCount",
+          "label": "tomcat.cache.{context}.hitsCount"
+        }
+      ]
+    }
+  ]
+}
