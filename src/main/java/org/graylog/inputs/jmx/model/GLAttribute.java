@@ -4,7 +4,7 @@ package org.graylog.inputs.jmx.model;
  * Created on 6/9/15.
  */
 public class GLAttribute {
-    String name,key,alias;
+    String name,key,label;
 
     public String getName() {
         return name;
@@ -22,11 +22,11 @@ public class GLAttribute {
         this.key = key;
     }
 
-    public String getAlias() {
-        return alias;
+    public String getLabel() {
+        return label;
     }
 
-    public void setAlias(String alias) {
-        this.alias = alias;
+    public void setLabel(String label) {
+        this.label = label;
     }
 }

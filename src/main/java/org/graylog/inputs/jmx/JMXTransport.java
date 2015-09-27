@@ -107,35 +107,32 @@ public class JMXTransport implements Transport {
 
         String jmxObjectType = configuration.getString(CK_CONFIG_TYPE);
         ObjectMapper configMapper = new ObjectMapper();
-        String configJson = jmxObjectType;
-        boolean error = true;
+        String jsonFilePath = jmxObjectType;
 
         try {
             if ("custom".equals(jmxObjectType)) {
-                configJson = configuration.getString(CK_CONFIG_CUSTOM_FILE_PATH);
-                if (configJson != null && configJson.length() > 0) {
-                    if (new File(configJson).exists()) {
-                        queryConfig = configMapper.readValue(configJson, GLQueryConfig.class);
-                        error = false;
+                jsonFilePath = configuration.getString(CK_CONFIG_CUSTOM_FILE_PATH);
+                if (jsonFilePath != null && jsonFilePath.length() > 0) {
+                    if (new File(jsonFilePath).exists()) {
+                        queryConfig = configMapper.readValue(new File(jsonFilePath), GLQueryConfig.class);
                     } else {
-                        LOGGER.error("Custom config file not present." + configJson);
+                        LOGGER.error("Custom config file not present." + jsonFilePath);
+                        throw new MisfireException("Cannot find custom config file " + jsonFilePath);
                     }
                 } else {
                     LOGGER.error("Custom config file not entered.");
+                    throw new MisfireException("Custom config file not entered");
                 }
             } else {
                 queryConfig = configMapper.readValue(
-                        JMXTransport.class.getClassLoader().getResourceAsStream(configJson),
+                        JMXTransport.class.getClassLoader().getResourceAsStream(jsonFilePath),
                         GLQueryConfig.class);
-                error = false;
             }
         } catch (IOException e) {
             LOGGER.error("Exception while parsing config file", e);
+            throw new MisfireException("Exception while parsing config file " + jsonFilePath, e);
         }
-
-        if (!error) {
-            startMonitoring(messageInput);
-        }
+        startMonitoring(messageInput);
     }
 
 
@@ -206,7 +203,7 @@ public class JMXTransport implements Transport {
                 Query.Builder queryBuilder = Query.builder().setObj(glQuery.getObject());
                 for (GLAttribute attribute : glQuery.getAttributes()) {
                     queryBuilder.addAttr(attribute.getName());
-                    String mapKey = glQuery.getObject() + attribute.getName();
+                    String mapKey = attribute.getName();
                     if (attribute.getKey() != null) {
                         mapKey += attribute.getKey();
                     }
@@ -228,29 +225,33 @@ public class JMXTransport implements Transport {
             try {
                 MBeanServerConnection connection = getConnection(server);
                 if (connection != null) {
-                    Map<String, Object> eventData = Maps.newHashMap();
-                    eventData.put("version", "1.1");
-                    eventData.put("_object", queryConfig.getType());
-                    eventData.put("host", server.getHost());
-                    eventData.put("_label", label);
-                    //graylog needs a short_message as part of every event
-                    eventData.put("short_message", "JMX");
+
+                    Map<String, Object> event = createEvent();
                     for (Query query : queries) {
                         HashMultimap<ObjectName, Result> results = queryProcessor.processQuery(connection, query);
                         for (Map.Entry<ObjectName, Result> entry : results.entries()) {
-                            processResult(eventData, entry);
+                            processResult(event, entry);
                         }
                     }
-                    publishToGLServer(eventData);
-
-
+                    publishToGLServer(event);
                 } else {
                     LOGGER.debug("Cannot get connection for server " + server);
                 }
 
             } catch (Exception e) {
-                LOGGER.error("Exception while querying " + server.getHost(), e);
+                LOGGER.debug("Exception while querying " + server.getHost(), e);
             }
+        }
+
+        private Map<String, Object> createEvent() {
+            Map<String, Object> eventData = Maps.newHashMap();
+            eventData.put("version", "1.1");
+            eventData.put("_object", queryConfig.getType());
+            eventData.put("host", server.getHost());
+            eventData.put("_label", label);
+            //graylog needs a short_message as part of every event
+            eventData.put("short_message", "JMX");
+            return eventData;
         }
 
         private void publishToGLServer(Map<String, Object> eventData) throws IOException {
@@ -263,36 +264,63 @@ public class JMXTransport implements Transport {
             }
         }
 
+        //Ignore all chars, except alpha numeric, @_.
+        private String sanitize(String string) {
+            StringBuilder bldr = new StringBuilder();
+            for (int i = 0; i < string.length(); i++) {
+                if (Character.isAlphabetic(string.codePointAt(i)) ||
+                        Character.isDigit(string.codePointAt(i)) ||
+                        string.charAt(i) == '_' ||
+                        string.charAt(i) == '-' ||
+                        string.charAt(i) == '.') {
+                    bldr.append(Character.toLowerCase(string.charAt(i)));
+                }
+            }
+            return bldr.toString();
+        }
+
 
         //process JMXTrans result object as per configured json
-        private void processResult(Map<String, Object> eventData, Map.Entry<ObjectName, Result> entry) {
-            Result result = entry.getValue();
+        private void processResult(Map<String, Object> event, Map.Entry<ObjectName, Result> objectResult) {
+            Result result = objectResult.getValue();
             String attrName = result.getAttributeName();
-            Set<String> attrKeys = result.getValues().keySet();
+            Set<String> resultKeys = result.getValues().keySet();
 
-            for (String key : attrKeys) {
-                String alias = attrName;
-                String attrKey = entry.getKey().toString() + attrName;
+            Map<String, String> objectProperties = new HashMap<>();
+
+            for (Map.Entry<String, String> objPropEntry : objectResult.getKey().getKeyPropertyList().entrySet()) {
+                objectProperties.put(objPropEntry.getKey(), sanitize(objPropEntry.getValue()));
+            }
+
+            for (String key : resultKeys) {
+                String label;
+                String attrKey = attrName;
                 if (attrName.equals(key)) {
                     if (configuredAttributes.containsKey(attrKey)) {
-                        if (configuredAttributes.get(attrKey).getAlias() != null) {
-                            alias = configuredAttributes.get(attrKey).getAlias();
+                        if (configuredAttributes.get(attrKey).getLabel() != null) {
+                            label = formatLabel(objectProperties, configuredAttributes.get(attrKey).getLabel());
+                            event.put("_" + label, result.getValues().get(key));
                         }
-                        eventData.put("_" + alias, entry.getValue().getValues().get(key));
                     }
                 } else {
-                    alias = attrName + "." + key;
                     attrKey += key;
                     if (configuredAttributes.containsKey(attrKey)) {
-                        if (configuredAttributes.get(attrKey).getAlias() != null) {
-                            alias = configuredAttributes.get(attrKey).getAlias();
+                        if (configuredAttributes.get(attrKey).getLabel() != null) {
+                            label = formatLabel(objectProperties, configuredAttributes.get(attrKey).getLabel());
+                            event.put("_" + label, result.getValues().get(key));
                         }
-                        eventData.put("_" + alias, entry.getValue().getValues().get(key));
                     }
-
                 }
-
             }
+        }
+
+        private String formatLabel(Map<String, String> objectProperties, String label) {
+            if (label.contains("{")) {
+                for (Map.Entry<String, String> objectPropertyEntry : objectProperties.entrySet()) {
+                    label = label.replaceAll("\\{" + objectPropertyEntry.getKey() + "\\}", objectPropertyEntry.getValue());
+                }
+            }
+            return label;
         }
     }
 
@@ -393,6 +421,7 @@ public class JMXTransport implements Transport {
             //Do not add nano seconds and micro seconds
             timeUnits.remove(TimeUnit.NANOSECONDS.toString());
             timeUnits.remove(TimeUnit.MICROSECONDS.toString());
+            timeUnits.remove(TimeUnit.MILLISECONDS.toString());
 
             cr.addField(new DropdownField(
                     CK_CONFIG_INTERVAL_UNIT,
