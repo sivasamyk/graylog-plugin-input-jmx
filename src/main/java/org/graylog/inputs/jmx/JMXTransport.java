@@ -97,7 +97,7 @@ public class JMXTransport implements Transport {
         servers = new ArrayList<>(hosts.length);
 
         for (String host : hosts) {
-            Server server = Server.builder().setHost(host)
+            Server server = Server.builder().setHost(host.trim())
                     .setPort(String.valueOf(configuration.getInt(CK_CONFIG_PORT)))
                     .setUsername(configuration.getString(CK_CONFIG_USER_NAME))
                     .setPassword(configuration.getString(CK_CONFIG_PASSWORD))
@@ -384,6 +384,7 @@ public class JMXTransport implements Transport {
 
             Map<String, String> monitorTypes = new LinkedHashMap<>();
             monitorTypes.put("jvm.json", "JVM");
+            monitorTypes.put("tomcat.json", "Tomcat");
             monitorTypes.put("custom", "Custom");
             cr.addField(new DropdownField(CK_CONFIG_TYPE,
                     "JMX Object type",
@@ -412,7 +413,7 @@ public class JMXTransport implements Transport {
                     TextField.Attribute.IS_PASSWORD));
 
             cr.addField(new NumberField(CK_CONFIG_INTERVAL,
-                    "Interval",
+                    "Polling Interval",
                     1,
                     "Time between between requests",
                     ConfigurationField.Optional.NOT_OPTIONAL));
@@ -425,7 +426,7 @@ public class JMXTransport implements Transport {
 
             cr.addField(new DropdownField(
                     CK_CONFIG_INTERVAL_UNIT,
-                    "Interval time unit",
+                    "Polling Interval time unit",
                     TimeUnit.MINUTES.toString(),
                     timeUnits,
                     ConfigurationField.Optional.NOT_OPTIONAL

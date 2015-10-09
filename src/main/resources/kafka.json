@@ -1,0 +1,57 @@
+{
+  "type": "kafka",
+  "queries": [
+    {
+      "object": "kafka.server:type=BrokerTopicMetrics",
+      "attributes": [
+        {
+          "name": "MessagesInPerSec",
+          "label": "kafka.message.in.rate"
+        },
+        {
+          "name": "BytesInPerSec",
+          "label": "kafka.byte.in.rate"
+        },
+        {
+          "name": "BytesOutPerSec",
+          "label": "kafka.bytes.out.rate"
+        }
+      ]
+    },
+    {
+      "object": "kafka.server:type=ReplicaManager",
+      "attributes": [
+        {
+          "name": "IsrShrinksPerSec",
+          "label": "kafka.replication.isr.shrink.rate"
+        },
+        {
+          "name": "IsrExpandsPerSec",
+          "label": "kafka.replication.isr.expands.rate"
+        }
+      ]
+    },
+    {
+      "object": "kafka.controller:type=ControllerStats",
+      "attributes": [
+        {
+          "name": "LeaderElectionRateAndTimeMs",
+          "label": "kafka.controller.leader_elections"
+        },
+        {
+          "name": "UncleanLeaderElectionsPerSec",
+          "label": "kafka.controller.unclean_leader_elections"
+        }
+      ]
+    },
+    {
+      "object": "kafka.log:type=LogFlushStats",
+      "attributes": [
+        {
+          "name": "LogFlushRateAndTimeMs",
+          "label": "kafka.log.flush.rate"
+        }
+      ]
+    }
+  ]
+}
