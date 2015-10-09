@@ -1,4 +1,4 @@
-# Graylog JMXInputPlugin Plugin
+# Graylog JMX Input Plugin
 
 Welcome to your new Graylog plugin!
 
