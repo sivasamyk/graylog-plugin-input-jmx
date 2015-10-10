@@ -84,4 +84,8 @@ Screenshots
 
 Configuration Window
 
+![Configuration Window](https://raw.githubusercontent.com/sivasamyk/graylog-plugin-input-jmx/master/JMX-Config.png)
+
 JVM Dashboard
+
+![JVM Dashboard](https://raw.githubusercontent.com/sivasamyk/graylog-plugin-input-jmx/master/JVM-Dashboard.png)
