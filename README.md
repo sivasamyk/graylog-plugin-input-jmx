@@ -28,6 +28,22 @@ In this case the json config file path has to be specified in 'Config File Path'
 * Polling Interval - Interval to poll JMX endpoints (recommend to set the interval > 30 secs)
 * Polling Interval time unit - Polling interval time unit
 
+
+To enable JMX monitoring in your Java application you need to pass certain command options to the application. 
+e.g. To enable bare minimum JMX monitoring without security:
+
+```
+java \
+-Dcom.sun.management.jmxremote \
+-Dcom.sun.management.jmxremote.port=12345 \
+-Dcom.sun.management.jmxremote.authenticate=false \
+-Dcom.sun.management.jmxremote.ssl=false \
+-jar /usr/share/doc/openjdk-6-jre-headless/demo/jfc/Notepad/Notepad.jar
+```
+
+For more info on authentication and options refer 
+[http://docs.oracle.com/javase/8/docs/technotes/guides/management/agent.html](http://docs.oracle.com/javase/8/docs/technotes/guides/management/agent.html)
+
 Custom Configuration
 --------------------
 
@@ -44,7 +60,7 @@ specified while launching the plugin. Example config file
          {
            "name": "HeapMemoryUsage", /* JMX MBean Attribute Name */
            "key": "used", /* JMX Attribute Key if applicable */
-           "label": "jvm.mem.heap.used" /* Label for this attribute. Maps to a field in the graylog message. Allowed characters are A-Z,a-z,0-9,.,_ */ 
+           "label": "jvm.mem.heap.used" /* Maps to a field in the graylog message. Allowed characters are A-Z,a-z,0-9,.,_ */ 
          }
        ]
      },
@@ -63,4 +79,9 @@ specified while launching the plugin. Example config file
 
 This plugin uses the JMX Query code from [JMXTrans](https://github.com/jmxtrans/jmxtrans) project
 
+Screenshots
+-----------
 
+Configuration Window
+
+JVM Dashboard
