@@ -14,7 +14,7 @@ Features
 Setup
 -----
 
-Download the plugin jar and copy to graylog plugin directory (restart the graylog server for the changes to take effect).
+Download the plugin [jar](https://github.com/sivasamyk/graylog-plugin-input-jmx/releases/download/v1.0.0-SNAPSHOT/graylog-plugin-input-jmx-1.0.0-SNAPSHOT.jar) and copy to graylog plugin directory (restart the graylog server for the changes to take effect).
 From Graylog UI, launch System->Input and select "JMX" input type
 
 Following parameters can be configured
