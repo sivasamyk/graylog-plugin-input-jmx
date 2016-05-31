@@ -271,8 +271,7 @@ public class JMXTransport implements Transport {
                 if (Character.isAlphabetic(string.codePointAt(i)) ||
                         Character.isDigit(string.codePointAt(i)) ||
                         string.charAt(i) == '_' ||
-                        string.charAt(i) == '-' ||
-                        string.charAt(i) == '.') {
+                        string.charAt(i) == '-' ) {
                     bldr.append(Character.toLowerCase(string.charAt(i)));
                 }
             }

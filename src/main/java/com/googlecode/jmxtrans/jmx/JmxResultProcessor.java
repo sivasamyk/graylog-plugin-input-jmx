@@ -28,6 +28,7 @@ public class JmxResultProcessor {
     private final String className;
     private final String objDomain;
     private final List<Attribute> attributes;
+    private static final String SEPERATOR = "_";
 
     public JmxResultProcessor(Query query, ObjectInstance objectInstance, List<Attribute> attributes, String className, String objDomain) {
         this.query = query;
@@ -73,7 +74,7 @@ public class JmxResultProcessor {
             Map<String, Object> values = newHashMap();
             for (int i = 0; i < Array.getLength(value); i++) {
                 Object val = Array.get(value, i);
-                values.put(attribute.getName() + "." + i, val);
+                values.put(attribute.getName() + SEPERATOR + i, val);
             }
             accumulator.add(getNewResultObject(attribute.getName(), values));
         } else if (value instanceof TabularDataSupport) {
@@ -115,7 +116,7 @@ public class JmxResultProcessor {
             Object value = cds.get(key);
             if (value instanceof TabularDataSupport) {
                 TabularDataSupport tds = (TabularDataSupport) value;
-                processTabularDataSupport(accumulator, attributeName + "." + key, tds);
+                processTabularDataSupport(accumulator, attributeName + SEPERATOR + key, tds);
                 values.put(key, value);
             } else if (value instanceof CompositeDataSupport) {
                 // now recursively go through everything.
@@ -142,7 +143,7 @@ public class JmxResultProcessor {
                 // might as well loop it.
                 StringBuilder sb = new StringBuilder();
                 for (Object entryKey : (List<?>) entryKeys) {
-                    sb.append(".");
+                    sb.append(SEPERATOR);
                     sb.append(entryKey);
                 }
                 String attributeName2 = sb.toString();
