@@ -10,11 +10,12 @@ Features
 * Built-in support for monitoring JVM and Tomcat servers (more to come)
 * Monitor multiple servers from single input plugin instance
 * Support for monitoring custom JMX endpoints
+* Tested with Graylog 2.0.0
 
 Setup
 -----
 
-Download the plugin [jar](https://github.com/sivasamyk/graylog-plugin-input-jmx/releases/download/v1.0.0/graylog-plugin-input-jmx-1.0.0-SNAPSHOT.jar) and copy to graylog plugin directory (restart the graylog server for the changes to take effect).
+Download the plugin [jar](https://github.com/sivasamyk/graylog-plugin-input-jmx/releases/download/v1.0.1/graylog-plugin-input-jmx-1.0.0-SNAPSHOT.jar) and copy to graylog plugin directory (restart the graylog server for the changes to take effect).
 From Graylog UI, launch System->Input and select "JMX" input type
 
 Following parameters can be configured
