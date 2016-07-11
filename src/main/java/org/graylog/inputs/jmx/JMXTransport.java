@@ -381,13 +381,13 @@ public class JMXTransport implements Transport {
                     "",
                     "Label to identify this HTTP monitor"));
 
-            Map<String, String> monitorTypes = new LinkedHashMap<>();
+            Map<String, String> monitorTypes = new HashMap<>();
             monitorTypes.put("jvm.json", "JVM");
             monitorTypes.put("tomcat.json", "Tomcat");
             monitorTypes.put("custom", "Custom");
             cr.addField(new DropdownField(CK_CONFIG_TYPE,
                     "JMX Object type",
-                    "JVM",
+                    "jvm.json",
                     monitorTypes,
                     "JMX Object type to monitor",
                     ConfigurationField.Optional.NOT_OPTIONAL));
