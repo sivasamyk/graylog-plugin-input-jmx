@@ -70,6 +70,8 @@ public class JMXTransport implements Transport {
     private static final String CK_CONFIG_INTERVAL_UNIT = "configIntervalUnit";
     private static final String CK_CONFIG_TYPE = "configType";
     private static final String CK_CONFIG_CUSTOM_FILE_PATH = "configCustomFilePath";
+    private static final String CK_CONFIG_TRUSTSTORE_PATH = "configTruststorePath";
+    private static final String CK_CONFIG_TRUSTSTORE_PASS = "configTruststorePass";
 
 
     @AssistedInject
@@ -101,6 +103,8 @@ public class JMXTransport implements Transport {
                     .setPort(String.valueOf(configuration.getInt(CK_CONFIG_PORT)))
                     .setUsername(configuration.getString(CK_CONFIG_USER_NAME))
                     .setPassword(configuration.getString(CK_CONFIG_PASSWORD))
+                    .setTrustStorePath(configuration.getString(CK_CONFIG_TRUSTSTORE_PATH))
+                    .setTrustStorePass(configuration.getString(CK_CONFIG_TRUSTSTORE_PASS))
                     .build();
             servers.add(server);
         }
@@ -422,7 +426,6 @@ public class JMXTransport implements Transport {
             timeUnits.remove(TimeUnit.NANOSECONDS.toString());
             timeUnits.remove(TimeUnit.MICROSECONDS.toString());
             timeUnits.remove(TimeUnit.MILLISECONDS.toString());
-
             cr.addField(new DropdownField(
                     CK_CONFIG_INTERVAL_UNIT,
                     "Polling Interval time unit",
@@ -430,6 +433,20 @@ public class JMXTransport implements Transport {
                     timeUnits,
                     ConfigurationField.Optional.NOT_OPTIONAL
             ));
+
+            cr.addField(new TextField(CK_CONFIG_TRUSTSTORE_PATH,
+                    "SSL Truststore Path",
+                    "",
+                    "Absolute path of SSL Truststore file (used when SSL is enabled)",
+                    ConfigurationField.Optional.OPTIONAL
+            ));
+            cr.addField(new TextField(CK_CONFIG_TRUSTSTORE_PASS,
+                    "SSL Trustsotre Password",
+                    "",
+                    "Password for SSLTruststore",
+                    ConfigurationField.Optional.OPTIONAL,
+                    TextField.Attribute.IS_PASSWORD));
+
 
             return cr;
         }

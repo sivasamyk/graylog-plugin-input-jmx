@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.googlecode.jmxtrans.jmx.JmxQueryProcessor;
 
@@ -15,12 +14,23 @@ import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
+import javax.rmi.ssl.SslRMIClientSocketFactory;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.net.Socket;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.*;
 
 import static com.fasterxml.jackson.databind.annotation.JsonSerialize.Inclusion.NON_NULL;
 import static com.google.common.collect.ImmutableSet.copyOf;
@@ -62,6 +72,24 @@ public class Server {
     private final String url;
     private final String cronExpression;
     private final Integer numQueryThreads;
+    private String trustStorePath;
+    private String trustStorePass;
+
+    public String getTrustStorePath() {
+        return trustStorePath;
+    }
+
+    public void setTrustStorePath(String trustStorePath) {
+        this.trustStorePath = trustStorePath;
+    }
+
+    public String getTrustStorePass() {
+        return trustStorePass;
+    }
+
+    public void setTrustStorePass(String trustStorePass) {
+        this.trustStorePass = trustStorePass;
+    }
 
     // if using local JMX to embed JmxTrans to query the local MBeanServer
     private final boolean local;
@@ -80,7 +108,9 @@ public class Server {
             @JsonProperty("cronExpression") String cronExpression,
             @JsonProperty("numQueryThreads") Integer numQueryThreads,
             @JsonProperty("local") boolean local,
-            @JsonProperty("queries") List<Query> queries) {
+            @JsonProperty("queries") List<Query> queries,
+            @JsonProperty("trustStorePath") String trustStorePath,
+            @JsonProperty("trustStorePass") String trustStorePass) {
         this.alias = resolveProps(alias);
         this.host = resolveProps(host);
         this.port = resolveProps(port);
@@ -92,33 +122,59 @@ public class Server {
         this.numQueryThreads = numQueryThreads;
         this.local = local;
         this.queries = copyOf(queries);
+        this.trustStorePath = trustStorePath;
+        this.trustStorePass = trustStorePass;
     }
 
     /**
      * Generates the proper username/password environment for JMX connections.
      */
     @JsonIgnore
-    public ImmutableMap<String, ?> getEnvironment() {
+    public Map<String, Object> getEnvironment() {
+        Map<String, Object> environment = new HashMap<>();
         if (getProtocolProviderPackages() != null && getProtocolProviderPackages().contains("weblogic")) {
-            ImmutableMap.Builder<String, String> environment = ImmutableMap.builder();
             if ((username != null) && (password != null)) {
                 environment.put(PROTOCOL_PROVIDER_PACKAGES, getProtocolProviderPackages());
                 environment.put(SECURITY_PRINCIPAL, username);
                 environment.put(SECURITY_CREDENTIALS, password);
             }
-            return environment.build();
         }
 
-        ImmutableMap.Builder<String, String[]> environment = ImmutableMap.builder();
         if ((username != null) && (password != null)) {
-            String[] credentials = new String[] {
+            String[] credentials = new String[]{
                     username,
                     password
             };
             environment.put(JMXConnector.CREDENTIALS, credentials);
         }
 
-        return environment.build();
+        if (trustStorePath != null) {
+            environment.put("com.sun.jndi.rmi.factory.socket", createSslRMIClientSocketFactory());
+        }
+
+        return environment;
+    }
+
+    private SslRMIClientSocketFactory createSslRMIClientSocketFactory() {
+        return new SslRMIClientSocketFactory() {
+            @Override
+            public Socket createSocket(String host, int port) throws IOException {
+                try {
+                    final SocketFactory sslSocketFactory = getSslConetext().getSocketFactory();
+                    return sslSocketFactory.createSocket(host, port);
+                } catch (GeneralSecurityException e) {
+                    throw new IOException("Cannot create socket", e);
+                }
+            }
+        };
+    }
+
+    private SSLContext getSslConetext() throws GeneralSecurityException,IOException {
+        TrustManager[] myTMs = new TrustManager[]{
+                new JMXX509TrustManager(trustStorePath, trustStorePass.toCharArray())};
+        SSLContext ctx = SSLContext.getInstance("TLS");
+        ctx.init(null, myTMs, null);
+        return ctx;
     }
 
     /**
@@ -282,9 +338,23 @@ public class Server {
         private String cronExpression;
         private Integer numQueryThreads;
         private boolean local;
+        private String trustStorePath;
+
+        public Builder setTrustStorePath(String trustStorePath) {
+            this.trustStorePath = trustStorePath;
+            return this;
+        }
+
+        public Builder setTrustStorePass(String trustStorePass) {
+            this.trustStorePass = trustStorePass;
+            return this;
+        }
+
+        private String trustStorePass;
         private final List<Query> queries = new ArrayList<Query>();
 
-        private Builder() {}
+        private Builder() {
+        }
 
         private Builder(Server server) {
             this.alias = server.alias;
@@ -297,6 +367,8 @@ public class Server {
             this.cronExpression = server.cronExpression;
             this.numQueryThreads = server.numQueryThreads;
             this.local = server.local;
+            this.trustStorePath = server.trustStorePath;
+            this.trustStorePass = server.trustStorePass;
             this.queries.addAll(server.queries);
         }
 
@@ -377,26 +449,96 @@ public class Server {
                     cronExpression,
                     numQueryThreads,
                     local,
-                    queries);
+                    queries,
+                    trustStorePath,
+                    trustStorePass);
         }
     }
 
 
-    public static void main(String args[]) throws Exception
-    {
+    public static void main(String args[]) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
-        Query[] queries = objectMapper.readValue(new File("src/monitors.json"),Query[].class);
+       // Query[] queries = objectMapper.readValue(new File("src/monitors.json"), Query[].class);
         Server.Builder serverBuilder = new Server.Builder();
         serverBuilder.setHost("localhost").setPort("12345");
-//        Query query = Query.builder().setObj("java.lang:type=Memory")
-//                .addAttr("HeapMemoryUsage")
-//                .addAttr("NonHeapMemoryUsage")
-//                .build();
+        //serverBuilder.setTrustStorePath("/home/user/Documents/keys/truststore.ts")
+        //.setTrustStorePass("password").setPassword("derby");
+        Query query = Query.builder().setObj("java.lang:type=Memory")
+                .addAttr("HeapMemoryUsage")
+                .addAttr("NonHeapMemoryUsage")
+                .build();
         Server server = serverBuilder.build();
         MBeanServerConnection connection = server.getServerConnection().getMBeanServerConnection();
         JmxQueryProcessor queryProcessor = new JmxQueryProcessor();
-        for(Query query : queries) {
-            queryProcessor.processQuery(connection, query);
+       /* for (Query query : queries) {*/
+            System.out.println(queryProcessor.processQuery(connection, query));
+        //}
+    }
+
+    class JMXX509TrustManager implements X509TrustManager {
+
+        /*
+         * The default PKIX X509TrustManager9.  We'll delegate
+         * decisions to it, and fall back to the logic in this class if the
+         * default X509TrustManager doesn't trust it.
+         */
+        X509TrustManager pkixTrustManager;
+
+        JMXX509TrustManager(String tsFile, char[] pass) throws GeneralSecurityException,IOException {
+            // create a "default" JSSE X509TrustManager.
+
+            KeyStore ks = KeyStore.getInstance("JKS");
+            ks.load(new FileInputStream(tsFile),
+                    pass);
+
+            TrustManagerFactory tmf =
+                    TrustManagerFactory.getInstance("PKIX");
+            tmf.init(ks);
+
+            TrustManager tms[] = tmf.getTrustManagers();
+
+         /*
+          * Iterate over the returned trustmanagers, look
+          * for an instance of X509TrustManager.  If found,
+          * use that as our "default" trust manager.
+          */
+            for (int i = 0; i < tms.length; i++) {
+                if (tms[i] instanceof X509TrustManager) {
+                    pkixTrustManager = (X509TrustManager) tms[i];
+                    return;
+                }
+            }
+        }
+
+        /*
+         * Delegate to the default trust manager.
+         */
+        public void checkClientTrusted(X509Certificate[] chain, String authType)
+                throws CertificateException {
+            try {
+                pkixTrustManager.checkClientTrusted(chain, authType);
+            } catch (CertificateException e) {
+                e.printStackTrace();
+            }
+        }
+
+        /*
+         * Delegate to the default trust manager.
+         */
+        public void checkServerTrusted(X509Certificate[] chain, String authType)
+                throws CertificateException {
+            try {
+                pkixTrustManager.checkServerTrusted(chain, authType);
+            } catch (CertificateException e) {
+                e.printStackTrace();
+            }
+        }
+
+        /*
+         * Merely pass this through.
+         */
+        public X509Certificate[] getAcceptedIssuers() {
+            return pkixTrustManager.getAcceptedIssuers();
         }
     }
 

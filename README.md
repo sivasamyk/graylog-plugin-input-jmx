@@ -7,6 +7,7 @@ Features
 
 * No agent required in the machines to be monitored
 * Support for Authentication
+* Support for SSL
 * Built-in support for monitoring JVM and Tomcat servers (more to come)
 * Monitor multiple servers from single input plugin instance
 * Support for monitoring custom JMX endpoints
@@ -79,6 +80,28 @@ specified while launching the plugin. Example config file
  ```
 
 This plugin uses the JMX Query code from [JMXTrans](https://github.com/jmxtrans/jmxtrans) project
+
+Enabling SSL
+------------
+
+* To enable SSL generate keystore and truststore using keytool. Refet to following like for detailed steps.
+
+[https://pubs.vmware.com/continuent/tungsten-replicator-3.0/deployment-ssl-stores.html](https://pubs.vmware.com/continuent/tungsten-replicator-3.0/deployment-ssl-stores.html)
+
+* Start the application to be monitored using following command line arguments:
+```
+java -Dcom.sun.management.jmxremote.port=1234
+    -Djavax.net.ssl.keyStore=/home/user/Documents/keystore.jks
+    -Djavax.net.ssl.keyStorePassword=keystorepass
+    -Djavax.net.ssl.trustStore=/home/user/Documents/truststore.ts
+    -Djavax.net.ssl.trustStorePassword=truststorepass
+    -Dcom.sun.management.jmxremote.registry.ssl=true
+    -Dcom.sun.management.jmxremote.authenticate=false
+    MainClass
+```
+* Configure Truststore path and password in Graylog plugin configuration window.
+* If you are using self-signed or untrusted certificates, remember to add them to trusted certificates in JRE lib/security
+For more info refer to [https://www.mkyong.com/webservices/jax-ws/suncertpathbuilderexception-unable-to-find-valid-certification-path-to-requested-target/](https://www.mkyong.com/webservices/jax-ws/suncertpathbuilderexception-unable-to-find-valid-certification-path-to-requested-target/)
 
 Screenshots
 -----------
