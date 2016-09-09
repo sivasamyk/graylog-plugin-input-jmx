@@ -85,7 +85,6 @@ Enabling SSL
 ------------
 
 * To enable SSL generate keystore and truststore using keytool. Refet to following like for detailed steps.
-
 [https://pubs.vmware.com/continuent/tungsten-replicator-3.0/deployment-ssl-stores.html](https://pubs.vmware.com/continuent/tungsten-replicator-3.0/deployment-ssl-stores.html)
 
 * Start the application to be monitored using following command line arguments:
