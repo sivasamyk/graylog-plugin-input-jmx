@@ -148,7 +148,7 @@ public class Server {
             environment.put(JMXConnector.CREDENTIALS, credentials);
         }
 
-        if (trustStorePath != null) {
+        if (trustStorePath != null && trustStorePath.trim().length() > 0) {
             environment.put("com.sun.jndi.rmi.factory.socket", createSslRMIClientSocketFactory());
         }
 

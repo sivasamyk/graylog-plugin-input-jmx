@@ -349,7 +349,7 @@ public class JMXTransport implements Transport {
                 connections.put(server.getUrl(), connection);
             } catch (Exception e) {
                 //Cannot create new Connection
-                LOGGER.debug("Cannot create new connection for server" + server, e);
+                LOGGER.warn("Cannot create new connection for server" + server, e);
             }
         }
         return connection;
