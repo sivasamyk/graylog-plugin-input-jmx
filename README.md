@@ -16,7 +16,7 @@ Features
 Setup
 -----
 
-Download the plugin [jar](https://github.com/sivasamyk/graylog-plugin-input-jmx/releases/download/v1.0.1/graylog-plugin-input-jmx-1.0.0-SNAPSHOT.jar) and copy to graylog plugin directory (restart the graylog server for the changes to take effect).
+Download the plugin [jar](https://github.com/sivasamyk/graylog-plugin-input-jmx/releases/download/v1.0.2/graylog-plugin-input-jmx-1.0.2-SNAPSHOT.jar) and copy to graylog plugin directory (restart the graylog server for the changes to take effect).
 From Graylog UI, launch System->Input and select "JMX" input type
 
 Following parameters can be configured
@@ -84,7 +84,7 @@ This plugin uses the JMX Query code from [JMXTrans](https://github.com/jmxtrans/
 Enabling SSL
 ------------
 
-* To enable SSL generate keystore and truststore using keytool. Refet to following like for detailed steps.
+* To enable SSL generate keystore and truststore using keytool. Refer to following like for detailed steps.
 [https://pubs.vmware.com/continuent/tungsten-replicator-3.0/deployment-ssl-stores.html](https://pubs.vmware.com/continuent/tungsten-replicator-3.0/deployment-ssl-stores.html)
 
 * Start the application to be monitored using following command line arguments:
