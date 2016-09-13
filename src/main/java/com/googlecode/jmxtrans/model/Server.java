@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableSet;
 import com.googlecode.jmxtrans.jmx.JmxQueryProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
@@ -20,7 +22,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -62,6 +63,7 @@ public class Server {
 
     private static final String FRONT = "service:jmx:rmi:///jndi/rmi://";
     private static final String BACK = "/jmxrmi";
+    private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
 
     private final String alias;
     private final String host;
@@ -518,7 +520,7 @@ public class Server {
             try {
                 pkixTrustManager.checkClientTrusted(chain, authType);
             } catch (CertificateException e) {
-                e.printStackTrace();
+                LOGGER.error("Exception for checking client certs", e);
             }
         }
 
@@ -530,7 +532,7 @@ public class Server {
             try {
                 pkixTrustManager.checkServerTrusted(chain, authType);
             } catch (CertificateException e) {
-                e.printStackTrace();
+                LOGGER.error("Exception for checking server certs",e);
             }
         }
 

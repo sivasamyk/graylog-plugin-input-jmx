@@ -229,7 +229,6 @@ public class JMXTransport implements Transport {
             try {
                 MBeanServerConnection connection = getConnection(server);
                 if (connection != null) {
-
                     Map<String, Object> event = createEvent();
                     for (Query query : queries) {
                         HashMultimap<ObjectName, Result> results = queryProcessor.processQuery(connection, query);
@@ -243,7 +242,7 @@ public class JMXTransport implements Transport {
                 }
 
             } catch (Exception e) {
-                LOGGER.debug("Exception while querying " + server.getHost(), e);
+                LOGGER.error("Exception while querying " + server.getHost(), e);
             }
         }
 
@@ -349,7 +348,7 @@ public class JMXTransport implements Transport {
                 connections.put(server.getUrl(), connection);
             } catch (Exception e) {
                 //Cannot create new Connection
-                LOGGER.warn("Cannot create new connection for server" + server, e);
+                LOGGER.error("Cannot create new connection for server" + server, e);
             }
         }
         return connection;
